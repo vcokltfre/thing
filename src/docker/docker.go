@@ -3,6 +3,7 @@ package docker
 import (
 	"context"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -131,7 +132,12 @@ func (c *DockerClient) Start(image, imageName, name string, env []string, portMa
 		portMap = nat.PortMap{}
 	}
 
-	_, err = c.client.ImagePull(context.Background(), image, types.ImagePullOptions{})
+	r, err := c.client.ImagePull(context.Background(), image, types.ImagePullOptions{})
+	if err != nil {
+		return "", err
+	}
+	defer r.Close()
+	_, err = io.ReadAll(r)
 	if err != nil {
 		return "", err
 	}
